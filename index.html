@@ -152,7 +152,7 @@ form h2 { font-family: var(--font-display); margin: 0; font-size: 1.3rem; }
     <div id="list"></div>
     <div class="empty-state" id="empty" hidden>
       <h2>Aún no hay ninguna IPTV</h2>
-      <p>Añade la primera con el nombre del amigo, su usuario, contraseña y enlace M3U.</p>
+      <p>Añade la primera con el nombre del amigo, su usuario, contraseña, enlace y enlace M3U.</p>
       <button class="btn btn-primary" type="button" id="emptyAdd">+ Añadir IPTV</button>
     </div>
     <div class="empty-state" id="loading"><p>Cargando tus IPTV…</p></div>
@@ -166,6 +166,7 @@ form h2 { font-family: var(--font-display); margin: 0; font-size: 1.3rem; }
     <div class="fl"><label for="f-name">Amigo / nombre</label><input id="f-name" required autocomplete="off" placeholder="Ej. Carlos"></div>
     <div class="fl"><label for="f-user">Usuario</label><input id="f-user" class="mono" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
     <div class="fl"><label for="f-pass">Contraseña</label><input id="f-pass" class="mono" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+    <div class="fl"><label for="f-link">Enlace</label><input id="f-link" class="mono" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="http://servidor.com:8080"></div>
     <div class="fl"><label for="f-m3u">Enlace M3U</label><textarea id="f-m3u" class="mono" rows="3" autocapitalize="off" spellcheck="false" placeholder="http://servidor:8080/get.php?username=…&password=…&type=m3u_plus"></textarea></div>
     <div class="fl"><label for="f-notes">Notas (opcional)</label><textarea id="f-notes" rows="2" placeholder="Ej. caduca en marzo, 2 conexiones"></textarea></div>
     <p class="err" id="formErr" hidden></p>
@@ -284,7 +285,7 @@ form h2 { font-family: var(--font-display); margin: 0; font-size: 1.3rem; }
   function render() {
     const q = $("search").value.trim().toLowerCase();
     const sorted = [...items].sort((a, b) => (a.name || "").localeCompare(b.name || "", "es"));
-    const shown = q ? sorted.filter((i) => [i.name, i.username, i.m3u, i.notes].some((s) => (s || "").toLowerCase().includes(q))) : sorted;
+    const shown = q ? sorted.filter((i) => [i.name, i.username, i.link, i.m3u, i.notes].some((s) => (s || "").toLowerCase().includes(q))) : sorted;
     $("count").textContent = items.length ? items.length + (items.length === 1 ? " línea" : " líneas") : "";
     $("empty").hidden = items.length > 0;
 
@@ -327,7 +328,7 @@ form h2 { font-family: var(--font-display); margin: 0; font-size: 1.3rem; }
       }
 
       const fields = document.createElement("div"); fields.className = "fields";
-      fields.append(fieldRow(item, "username", "Usuario"), fieldRow(item, "password", "Contraseña", true), fieldRow(item, "m3u", "M3U"));
+      fields.append(fieldRow(item, "username", "Usuario"), fieldRow(item, "password", "Contraseña", true), fieldRow(item, "link", "Enlace"), fieldRow(item, "m3u", "M3U"));
       card.append(fields);
       if (item.notes) { const n = document.createElement("p"); n.className = "notes"; n.textContent = item.notes; card.append(n); }
       list.append(card);
@@ -356,6 +357,7 @@ form h2 { font-family: var(--font-display); margin: 0; font-size: 1.3rem; }
     $("f-name").value = item?.name || "";
     $("f-user").value = item?.username || "";
     $("f-pass").value = item?.password || "";
+    $("f-link").value = item?.link || "";
     $("f-m3u").value = item?.m3u || "";
     $("f-notes").value = item?.notes || "";
     $("formErr").hidden = true;
@@ -368,6 +370,7 @@ form h2 { font-family: var(--font-display); margin: 0; font-size: 1.3rem; }
       name: $("f-name").value.trim(),
       username: $("f-user").value.trim(),
       password: $("f-pass").value.trim(),
+      link: $("f-link").value.trim(),
       m3u: $("f-m3u").value.trim(),
       notes: $("f-notes").value.trim(),
     };
