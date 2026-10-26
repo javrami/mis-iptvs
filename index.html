@@ -81,6 +81,12 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .copy { padding: 6px 10px; border-radius: 7px; font-size: 0.8rem; font-weight: 700; background: var(--surface); border: 1px solid var(--line); min-width: 72px; }
 .copy.done { color: var(--ok); border-color: var(--ok); }
 .eye { padding: 6px 8px; border-radius: 7px; font-size: 0.8rem; color: var(--muted); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fl select { padding: 10px 12px; border-radius: 9px; border: 1px solid var(--line); background: var(--field); color: var(--fg); font: inherit; font-size: 16px; width: 100%; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { font-size: 0.75rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--field); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.warn { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); }
+.chip.bad { background: var(--danger-bg); color: var(--danger); }
 .notes { font-size: 0.85rem; color: var(--muted); white-space: pre-wrap; margin: 0; }
 
 .confirm { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: var(--danger-bg); border-radius: 10px; padding: 10px 12px; font-size: 0.9rem; }
@@ -164,6 +170,10 @@ form h2 { font-family: var(--font-display); margin: 0; font-size: 1.3rem; }
   <form id="form" novalidate>
     <h2 id="formTitle">Añadir IPTV</h2>
     <div class="fl"><label for="f-name">Amigo / nombre</label><input id="f-name" required autocomplete="off" placeholder="Ej. Carlos"></div>
+    <div class="row2">
+      <div class="fl"><label for="f-slots">Slots</label><select id="f-slots"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
+      <div class="fl"><label for="f-exp">Fecha de expiración</label><input id="f-exp" type="date"></div>
+    </div>
     <div class="fl"><label for="f-user">Usuario</label><input id="f-user" class="mono" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
     <div class="fl"><label for="f-pass">Contraseña</label><input id="f-pass" class="mono" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
     <div class="fl"><label for="f-link">Enlace</label><input id="f-link" class="mono" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="http://servidor.com:8080"></div>
@@ -282,6 +292,27 @@ form h2 { font-family: var(--font-display); margin: 0; font-size: 1.3rem; }
     return row;
   }
 
+  const DAY = 86400000;
+  function chipsFor(item) {
+    const wrap = document.createElement("div"); wrap.className = "chips";
+    const add = (text, cls) => { const c = document.createElement("span"); c.className = "chip" + (cls ? " " + cls : ""); c.textContent = text; wrap.append(c); };
+    const n = item.slots || 1;
+    add(n + (n === 1 ? " slot" : " slots"));
+    if (item.expires_on) {
+      const [y, m, d] = item.expires_on.split("-").map(Number);
+      const exp = new Date(y, m - 1, d);
+      const now = new Date(); const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const days = Math.round((exp - today) / DAY);
+      const nice = exp.toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
+      if (days < 0) add("Caducada el " + nice, "bad");
+      else if (days === 0) add("Caduca hoy", "warn");
+      else if (days === 1) add("Caduca mañana", "warn");
+      else if (days <= 30) add("Caduca en " + days + " días", "warn");
+      else add("Caduca el " + nice);
+    }
+    return wrap;
+  }
+
   function render() {
     const q = $("search").value.trim().toLowerCase();
     const sorted = [...items].sort((a, b) => (a.name || "").localeCompare(b.name || "", "es"));
@@ -309,7 +340,7 @@ form h2 { font-family: var(--font-display); margin: 0; font-size: 1.3rem; }
       d.addEventListener("click", () => { confirmId = item.id; render(); });
       acts.append(e, d);
       head.append(t, acts);
-      card.append(head);
+      card.append(head, chipsFor(item));
 
       if (confirmId === item.id) {
         const cf = document.createElement("div"); cf.className = "confirm";
@@ -357,6 +388,8 @@ form h2 { font-family: var(--font-display); margin: 0; font-size: 1.3rem; }
     $("f-name").value = item?.name || "";
     $("f-user").value = item?.username || "";
     $("f-pass").value = item?.password || "";
+    $("f-slots").value = String(item?.slots || 1);
+    $("f-exp").value = item?.expires_on || "";
     $("f-link").value = item?.link || "";
     $("f-m3u").value = item?.m3u || "";
     $("f-notes").value = item?.notes || "";
@@ -370,6 +403,8 @@ form h2 { font-family: var(--font-display); margin: 0; font-size: 1.3rem; }
       name: $("f-name").value.trim(),
       username: $("f-user").value.trim(),
       password: $("f-pass").value.trim(),
+      slots: Number($("f-slots").value),
+      expires_on: $("f-exp").value || null,
       link: $("f-link").value.trim(),
       m3u: $("f-m3u").value.trim(),
       notes: $("f-notes").value.trim(),
