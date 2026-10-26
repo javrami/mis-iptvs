@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mis IPTV</title>
+<meta name="theme-color" content="#12141b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mis IPTV">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: una columna de "fichas de línea", cabecera fija con buscador y botón de alta */
+:root {
+  --bg: #f3f4f7;
+  --surface: #ffffff;
+  --fg: #1a1d26;
+  --muted: #646a7c;
+  --line: #dfe2ea;
+  --field: #f0f2f6;
+  --accent: #c7621b;
+  --accent-ink: #ffffff;
+  --ok: #1f8a4c;
+  --danger: #c0352b;
+  --danger-bg: #fbe9e7;
+  --font-display: "Bricolage Grotesque", "Manrope", system-ui, sans-serif;
+  --font-body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12141b; --surface: #1b1e28; --fg: #e8eaf1; --muted: #979db0; --line: #2b2f3d;
+    --field: #232735; --accent: #f08a3e; --accent-ink: #1a0f06; --ok: #4cc27f;
+    --danger: #ff7a6e; --danger-bg: #3a1d1b; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.45; -webkit-text-size-adjust: 100%; }
+[hidden] { display: none !important; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 760px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+
+header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 20px 14px; display: flex; flex-direction: column; gap: 14px; border-bottom: 1px solid var(--line); }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.top-actions { display: flex; gap: 8px; align-items: center; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.75rem; margin: 0; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent); }
+.count { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); font-weight: 400; }
+.search { width: 100%; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); font: inherit; }
+
+button { font: inherit; cursor: pointer; border: 0; background: none; color: inherit; }
+button:disabled { opacity: .55; cursor: default; }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn { padding: 9px 16px; border-radius: 9px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-ghost { border: 1px solid var(--line); background: var(--surface); }
+.btn-danger { background: var(--danger); color: #fff; }
+.link { color: var(--muted); font-size: 0.85rem; text-decoration: underline; padding: 6px 4px; }
+
+#list { display: flex; flex-direction: column; gap: 14px; margin-top: 18px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+.name { font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; margin: 0; text-wrap: balance; }
+.meta { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+.actions { display: flex; gap: 6px; }
+.icon-btn { padding: 6px 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; color: var(--muted); border: 1px solid var(--line); }
+.icon-btn:hover { color: var(--fg); }
+.icon-btn.del:hover { color: var(--danger); border-color: var(--danger); }
+
+.fields { display: grid; gap: 8px; }
+.field { display: grid; grid-template-columns: 88px minmax(0, 1fr) auto; align-items: center; gap: 10px; background: var(--field); border-radius: 10px; padding: 8px 8px 8px 12px; }
+.label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+.value { font-family: var(--font-mono); font-size: 0.88rem; overflow-wrap: anywhere; min-width: 0; }
+.value.empty { color: var(--muted); font-family: var(--font-body); font-style: italic; }
+.fbtns { display: flex; gap: 4px; }
+.copy { padding: 6px 10px; border-radius: 7px; font-size: 0.8rem; font-weight: 700; background: var(--surface); border: 1px solid var(--line); min-width: 72px; }
+.copy.done { color: var(--ok); border-color: var(--ok); }
+.eye { padding: 6px 8px; border-radius: 7px; font-size: 0.8rem; color: var(--muted); }
+.notes { font-size: 0.85rem; color: var(--muted); white-space: pre-wrap; margin: 0; }
+
+.confirm { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: var(--danger-bg); border-radius: 10px; padding: 10px 12px; font-size: 0.9rem; }
+.confirm .btns { display: flex; gap: 6px; }
+
+.empty-state { text-align: center; padding: 48px 16px; color: var(--muted); border: 1.5px dashed var(--line); border-radius: 14px; margin-top: 18px; }
+.empty-state h2 { font-family: var(--font-display); color: var(--fg); margin: 0 0 6px; font-size: 1.2rem; }
+.empty-state p { margin: 0 0 16px; }
+.notice { font-size: 0.85rem; color: var(--muted); margin-top: 16px; }
+
+/* Acceso */
+.auth { max-width: 380px; margin: 0 auto; padding-block: 12vh 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 18px; }
+.auth h1 { font-size: 2.1rem; }
+.auth p { margin: 0; color: var(--muted); }
+.auth form { padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.ok-msg { color: var(--ok); font-size: 0.88rem; margin: 0; }
+
+dialog { border: 1px solid var(--line); border-radius: 16px; padding: 0; background: var(--surface); color: var(--fg); width: min(520px, calc(100vw - 32px)); }
+dialog::backdrop { background: rgb(10 12 18 / 0.55); }
+form { padding: 20px; display: flex; flex-direction: column; gap: 14px; margin: 0; }
+form h2 { font-family: var(--font-display); margin: 0; font-size: 1.3rem; }
+.fl { display: flex; flex-direction: column; gap: 5px; }
+.fl label { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
+.fl input, .fl textarea { padding: 10px 12px; border-radius: 9px; border: 1px solid var(--line); background: var(--field); color: var(--fg); font: inherit; font-size: 16px; width: 100%; }
+.fl input.mono, .fl textarea.mono { font-family: var(--font-mono); font-size: 15px; }
+.fl textarea { resize: vertical; min-height: 64px; }
+.form-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.err { color: var(--danger); font-size: 0.85rem; margin: 0; }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 0.9rem; z-index: 20; max-width: calc(100vw - 32px); }
+
+@media (max-width: 480px) {
+  .field { grid-template-columns: minmax(0, 1fr) auto; }
+  .field .label { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: no-preference) { .copy, .icon-btn, .btn { transition: background .15s, color .15s, border-color .15s; } }
+</style>
+</head>
+<body>
+
+<!-- Pantalla de acceso -->
+<section class="auth" id="authView" hidden>
+  <h1><span class="dot" aria-hidden="true"></span>Mis IPTV</h1>
+  <p id="authIntro">Entra con tu email y contraseña para ver tus líneas.</p>
+  <form id="authForm" novalidate>
+    <div class="fl"><label for="a-email">Email</label><input id="a-email" type="email" autocomplete="email" required></div>
+    <div class="fl"><label for="a-pass">Contraseña</label><input id="a-pass" type="password" autocomplete="current-password" minlength="6" required></div>
+    <p class="err" id="authErr" hidden></p>
+    <p class="ok-msg" id="authOk" hidden></p>
+    <button class="btn btn-primary" type="submit" id="authBtn">Entrar</button>
+    <button class="link" type="button" id="authToggle">¿Primera vez? Crear cuenta</button>
+  </form>
+</section>
+
+<!-- App -->
+<div class="wrap" id="appView" hidden>
+  <header>
+    <div class="top">
+      <h1><span class="dot" aria-hidden="true"></span>Mis IPTV <span class="count" id="count"></span></h1>
+      <div class="top-actions">
+        <button class="link" type="button" id="logoutBtn">Salir</button>
+        <button class="btn btn-primary" id="addBtn" type="button">+ Añadir</button>
+      </div>
+    </div>
+    <input class="search" id="search" type="search" placeholder="Buscar por amigo, usuario o enlace…" aria-label="Buscar">
+  </header>
+
+  <main>
+    <div id="list"></div>
+    <div class="empty-state" id="empty" hidden>
+      <h2>Aún no hay ninguna IPTV</h2>
+      <p>Añade la primera con el nombre del amigo, su usuario, contraseña y enlace M3U.</p>
+      <button class="btn btn-primary" type="button" id="emptyAdd">+ Añadir IPTV</button>
+    </div>
+    <div class="empty-state" id="loading"><p>Cargando tus IPTV…</p></div>
+    <p class="notice" id="notice" hidden></p>
+  </main>
+</div>
+
+<dialog id="dlg">
+  <form id="form" novalidate>
+    <h2 id="formTitle">Añadir IPTV</h2>
+    <div class="fl"><label for="f-name">Amigo / nombre</label><input id="f-name" required autocomplete="off" placeholder="Ej. Carlos"></div>
+    <div class="fl"><label for="f-user">Usuario</label><input id="f-user" class="mono" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+    <div class="fl"><label for="f-pass">Contraseña</label><input id="f-pass" class="mono" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+    <div class="fl"><label for="f-m3u">Enlace M3U</label><textarea id="f-m3u" class="mono" rows="3" autocapitalize="off" spellcheck="false" placeholder="http://servidor:8080/get.php?username=…&password=…&type=m3u_plus"></textarea></div>
+    <div class="fl"><label for="f-notes">Notas (opcional)</label><textarea id="f-notes" rows="2" placeholder="Ej. caduca en marzo, 2 conexiones"></textarea></div>
+    <p class="err" id="formErr" hidden></p>
+    <div class="form-actions">
+      <button class="btn btn-ghost" type="button" id="cancelBtn">Cancelar</button>
+      <button class="btn btn-primary" type="submit" id="saveBtn">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+(() => {
+  // Clave pública (publishable): es segura en el navegador; la seguridad la ponen las políticas RLS de la tabla.
+  const SUPABASE_URL = "https://npgfpbnuifatenafetrz.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_EXX2v8pJwfOSo3wfAzZqaQ_zaA3le4Z";
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const $ = (id) => document.getElementById(id);
+  let items = [];          // filas de la tabla iptvs
+  let editingId = null;
+  let confirmId = null;
+  let signupMode = false;
+  const revealed = new Set();
+
+  // ---------- acceso ----------
+  function showAuth() { $("authView").hidden = false; $("appView").hidden = true; }
+  function showApp() { $("authView").hidden = true; $("appView").hidden = false; load(); }
+
+  $("authToggle").addEventListener("click", () => {
+    signupMode = !signupMode;
+    $("authBtn").textContent = signupMode ? "Crear cuenta" : "Entrar";
+    $("authToggle").textContent = signupMode ? "Ya tengo cuenta: entrar" : "¿Primera vez? Crear cuenta";
+    $("authIntro").textContent = signupMode ? "Crea tu cuenta. Solo tú podrás ver lo que guardes." : "Entra con tu email y contraseña para ver tus líneas.";
+    $("a-pass").autocomplete = signupMode ? "new-password" : "current-password";
+    $("authErr").hidden = true; $("authOk").hidden = true;
+  });
+
+  $("authForm").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const email = $("a-email").value.trim(), password = $("a-pass").value;
+    $("authErr").hidden = true; $("authOk").hidden = true;
+    if (!email || password.length < 6) { authError("Escribe tu email y una contraseña de al menos 6 caracteres."); return; }
+    $("authBtn").disabled = true;
+    try {
+      if (signupMode) {
+        const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: location.origin + location.pathname } });
+        if (error) throw error;
+        if (!data.session) { $("authOk").textContent = "Cuenta creada. Abre el email de confirmación que te hemos enviado y luego entra aquí."; $("authOk").hidden = false; }
+      } else {
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      }
+    } catch (e) {
+      const m = (e.message || "").toLowerCase();
+      authError(m.includes("invalid login") ? "Email o contraseña incorrectos."
+        : m.includes("not confirmed") ? "Falta confirmar el email. Revisa tu bandeja de entrada (y spam)."
+        : m.includes("already registered") ? "Ese email ya tiene cuenta. Pulsa «Ya tengo cuenta: entrar»."
+        : "No se pudo completar: " + e.message);
+    } finally { $("authBtn").disabled = false; }
+  });
+  function authError(t) { $("authErr").textContent = t; $("authErr").hidden = false; }
+
+  $("logoutBtn").addEventListener("click", async () => { await sb.auth.signOut(); items = []; });
+
+  sb.auth.onAuthStateChange((event, session) => {
+    if (event === "TOKEN_REFRESHED") return;
+    session ? showApp() : showAuth();
+  });
+
+  // ---------- datos ----------
+  async function load() {
+    const { data, error } = await sb.from("iptvs").select("*").order("name");
+    $("loading").hidden = true;
+    if (error) { showNotice("No se pudieron cargar tus IPTV. Comprueba la conexión y recarga."); return; }
+    $("notice").hidden = true;
+    items = data;
+    render();
+  }
+  // Al volver a la app (p. ej. tras editar desde otro dispositivo), recarga.
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && !$("appView").hidden) load(); });
+
+  function showNotice(t) { $("notice").textContent = t; $("notice").hidden = false; }
+
+  // ---------- render ----------
+  const fmtDate = (ts) => ts ? new Date(ts).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" }) : "";
+
+  function fieldRow(item, key, label, secret) {
+    const val = item[key] || "";
+    const row = document.createElement("div");
+    row.className = "field";
+    const l = document.createElement("span"); l.className = "label"; l.textContent = label;
+    const v = document.createElement("span"); v.className = "value";
+    const hide = secret && !revealed.has(item.id);
+    if (!val) { v.textContent = "Sin " + label.toLowerCase(); v.classList.add("empty"); }
+    else v.textContent = hide ? "•".repeat(Math.min(val.length, 12)) : val;
+    const btns = document.createElement("div"); btns.className = "fbtns";
+    if (secret && val) {
+      const eye = document.createElement("button");
+      eye.type = "button"; eye.className = "eye";
+      eye.textContent = hide ? "Ver" : "Ocultar";
+      eye.addEventListener("click", () => { revealed.has(item.id) ? revealed.delete(item.id) : revealed.add(item.id); render(); });
+      btns.append(eye);
+    }
+    const c = document.createElement("button");
+    c.type = "button"; c.className = "copy"; c.textContent = "Copiar"; c.disabled = !val;
+    c.setAttribute("aria-label", "Copiar " + label.toLowerCase() + " de " + item.name);
+    c.addEventListener("click", () => copy(val, c));
+    btns.append(c);
+    row.append(l, v, btns);
+    return row;
+  }
+
+  function render() {
+    const q = $("search").value.trim().toLowerCase();
+    const sorted = [...items].sort((a, b) => (a.name || "").localeCompare(b.name || "", "es"));
+    const shown = q ? sorted.filter((i) => [i.name, i.username, i.m3u, i.notes].some((s) => (s || "").toLowerCase().includes(q))) : sorted;
+    $("count").textContent = items.length ? items.length + (items.length === 1 ? " línea" : " líneas") : "";
+    $("empty").hidden = items.length > 0;
+
+    const list = $("list");
+    list.replaceChildren();
+    if (items.length && !shown.length) {
+      const p = document.createElement("p"); p.className = "notice"; p.textContent = "Nada coincide con «" + $("search").value + "».";
+      list.append(p);
+    }
+    for (const item of shown) {
+      const card = document.createElement("article"); card.className = "card";
+      const head = document.createElement("div"); head.className = "card-head";
+      const t = document.createElement("div");
+      const h = document.createElement("h2"); h.className = "name"; h.textContent = item.name || "Sin nombre";
+      const m = document.createElement("div"); m.className = "meta"; m.textContent = item.updated_at ? "Actualizado el " + fmtDate(item.updated_at) : "";
+      t.append(h, m);
+      const acts = document.createElement("div"); acts.className = "actions";
+      const e = document.createElement("button"); e.type = "button"; e.className = "icon-btn"; e.textContent = "Editar";
+      e.addEventListener("click", () => openForm(item));
+      const d = document.createElement("button"); d.type = "button"; d.className = "icon-btn del"; d.textContent = "Borrar";
+      d.addEventListener("click", () => { confirmId = item.id; render(); });
+      acts.append(e, d);
+      head.append(t, acts);
+      card.append(head);
+
+      if (confirmId === item.id) {
+        const cf = document.createElement("div"); cf.className = "confirm";
+        const msg = document.createElement("span"); msg.textContent = "¿Borrar la IPTV de " + (item.name || "este amigo") + "?";
+        const b = document.createElement("div"); b.className = "btns";
+        const no = document.createElement("button"); no.type = "button"; no.className = "btn btn-ghost"; no.textContent = "Cancelar";
+        no.addEventListener("click", () => { confirmId = null; render(); });
+        const yes = document.createElement("button"); yes.type = "button"; yes.className = "btn btn-danger"; yes.textContent = "Borrar";
+        yes.addEventListener("click", async () => {
+          yes.disabled = true;
+          const { error } = await sb.from("iptvs").delete().eq("id", item.id);
+          if (error) { yes.disabled = false; toast("No se pudo borrar. Inténtalo de nuevo."); return; }
+          items = items.filter((x) => x.id !== item.id); confirmId = null; toast("Borrada"); render();
+        });
+        b.append(no, yes); cf.append(msg, b); card.append(cf);
+      }
+
+      const fields = document.createElement("div"); fields.className = "fields";
+      fields.append(fieldRow(item, "username", "Usuario"), fieldRow(item, "password", "Contraseña", true), fieldRow(item, "m3u", "M3U"));
+      card.append(fields);
+      if (item.notes) { const n = document.createElement("p"); n.className = "notes"; n.textContent = item.notes; card.append(n); }
+      list.append(card);
+    }
+  }
+
+  // ---------- copiar ----------
+  function copy(text, btn) {
+    const ok = () => { btn.textContent = "Copiado"; btn.classList.add("done"); setTimeout(() => { btn.textContent = "Copiar"; btn.classList.remove("done"); }, 1400); };
+    const fallback = () => {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.append(ta); ta.select(); ta.setSelectionRange(0, text.length);
+      let done = false; try { done = document.execCommand("copy"); } catch {}
+      ta.remove();
+      done ? ok() : toast("No se pudo copiar automáticamente");
+    };
+    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(ok, fallback);
+    else fallback();
+  }
+
+  // ---------- formulario ----------
+  function openForm(item) {
+    editingId = item ? item.id : null;
+    $("formTitle").textContent = item ? "Editar IPTV de " + (item.name || "") : "Añadir IPTV";
+    $("f-name").value = item?.name || "";
+    $("f-user").value = item?.username || "";
+    $("f-pass").value = item?.password || "";
+    $("f-m3u").value = item?.m3u || "";
+    $("f-notes").value = item?.notes || "";
+    $("formErr").hidden = true;
+    $("dlg").showModal();
+  }
+
+  $("form").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const data = {
+      name: $("f-name").value.trim(),
+      username: $("f-user").value.trim(),
+      password: $("f-pass").value.trim(),
+      m3u: $("f-m3u").value.trim(),
+      notes: $("f-notes").value.trim(),
+    };
+    if (!data.name) { $("formErr").textContent = "Pon el nombre del amigo para poder identificarla."; $("formErr").hidden = false; return; }
+    $("saveBtn").disabled = true;
+    const req = editingId
+      ? sb.from("iptvs").update(data).eq("id", editingId).select().single()
+      : sb.from("iptvs").insert(data).select().single();
+    const { data: row, error } = await req;
+    $("saveBtn").disabled = false;
+    if (error) { $("formErr").textContent = "No se pudo guardar. Comprueba la conexión y vuelve a intentarlo."; $("formErr").hidden = false; return; }
+    const i = items.findIndex((x) => x.id === row.id);
+    if (i >= 0) items[i] = row; else items.push(row);
+    $("dlg").close();
+    toast(editingId ? "Cambios guardados" : "IPTV añadida");
+    render();
+  });
+
+  $("cancelBtn").addEventListener("click", () => $("dlg").close());
+  $("addBtn").addEventListener("click", () => openForm(null));
+  $("emptyAdd").addEventListener("click", () => openForm(null));
+  $("search").addEventListener("input", render);
+
+  let tt;
+  function toast(t) { const el = $("toast"); el.textContent = t; el.hidden = false; clearTimeout(tt); tt = setTimeout(() => (el.hidden = true), 2000); }
+})();
+</script>
+</body>
+</html>
